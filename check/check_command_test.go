@@ -1,90 +1,147 @@
 package check_test
 
 import (
+	"bytes"
+	"io/ioutil"
+	"net/http"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"errors"
-
-	"github.com/starkandwayne/bosh2-errand-resource/bosh/boshfakes"
-	"github.com/starkandwayne/bosh2-errand-resource/check"
-	"github.com/starkandwayne/bosh2-errand-resource/concourse"
+	"github.com/cloudfoundry-incubator/credhub-cli/client/clientfakes"
+	"github.com/starkandwayne/credhub-resource/check"
+	"github.com/starkandwayne/credhub-resource/concourse"
+	"github.com/starkandwayne/credhub-resource/credhub"
 )
 
 var _ = Describe("CheckCommand", func() {
 	var (
 		checkCommand check.CheckCommand
-		director     *boshfakes.FakeDirector
+		client       credhub.CredhubClient
+		httpClient   *clientfakes.FakeHttpClient
 	)
 
 	BeforeEach(func() {
-		director = new(boshfakes.FakeDirector)
-		checkCommand = check.NewCheckCommand(director)
+		httpClient = new(clientfakes.FakeHttpClient)
+		client = credhub.NewCredhubClient(httpClient)
+		checkCommand = check.NewCheckCommand(&client)
 	})
 
 	Describe("Run", func() {
 		var checkRequest concourse.CheckRequest
 
-		BeforeEach(func() {
-			manifestContents := []byte{0xFE, 0xED, 0xDE, 0xAD, 0xBE, 0xEF}
-			director.DownloadManifestReturns(manifestContents, nil)
-		})
-
 		Context("When the manifest SHA does not match with the version provided", func() {
 			BeforeEach(func() {
 				checkRequest = concourse.CheckRequest{
 					Source: concourse.Source{
-						Target: "director.example.com",
+						Server:   "foo.example.com",
+						Username: "foo-user",
+						Password: "foo-pass",
 					},
 					Version: concourse.Version{},
 				}
+
+				httpClient.DoReturnsOnCall(0, &http.Response{
+					StatusCode: 200,
+					Body: ioutil.NopCloser(bytes.NewBufferString(`{
+            "app":{"version":"my-version","name":"CredHub"},
+            "auth-server":{"url":"https://example.com"}
+          }`)),
+				}, nil)
+
+				httpClient.DoReturnsOnCall(1, &http.Response{
+					StatusCode: 200,
+					Body: ioutil.NopCloser(bytes.NewBufferString(`{
+            "access_token":"2YotnFZFEjr1zCsicMWpAA",
+            "refresh_token":"5235FZFEjr1zCsicMWpAA",
+            "token_type":"bearer",
+            "expires_in":3600
+          }`)),
+				}, nil)
 			})
 
-			It("returns the SHA1 of the manifest", func() {
-				checkResponse, err := checkCommand.Run(checkRequest)
-				Expect(err).ToNot(HaveOccurred())
+			It("different order should lead to same SHA1", func() {
+				httpClient.DoReturnsOnCall(2, &http.Response{
+					StatusCode: 200,
+					Body: ioutil.NopCloser(bytes.NewBufferString(`{
+            "credentials": [
+              {
+                "version_created_at": "2016-09-06T23:26:58Z",
+                "name": "deploy1/dan/id.key"
+              },
+              {
+                "version_created_at": "2016-09-06T23:26:58Z",
+                "name": "dan.password"
+              }
+            ]
+          }`)),
+				}, nil)
 
-				Expect(director.DownloadManifestCallCount()).To(Equal(1))
+				checkResponse, err := checkCommand.Run(checkRequest)
+				Expect(httpClient.DoCallCount()).To(Equal(3))
+				Expect(err).ToNot(HaveOccurred())
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
-						ManifestSha1: "33bf00cb7a45258748f833a47230124fcc8fa3a4",
-						Target:       "director.example.com",
+						ManifestSha1: "182d2f06b2e6368bd2f22269362351616f5406ed",
+						Target:       "foo.example.com",
 					},
 				}))
 			})
-		})
 
-		Context("When the manifest SHA matches the version provided to the check", func() {
-			BeforeEach(func() {
-				checkRequest = concourse.CheckRequest{
-					Source: concourse.Source{
-						Target: "director.example.com",
-					},
-					Version: concourse.Version{
-						ManifestSha1: "33bf00cb7a45258748f833a47230124fcc8fa3a4",
-						Target:       "director.example.com",
-					},
-				}
-			})
+			It("returns the SHA1 of the credhub keys", func() {
+				httpClient.DoReturnsOnCall(2, &http.Response{
+					StatusCode: 200,
+					Body: ioutil.NopCloser(bytes.NewBufferString(`{
+            "credentials": [
+              {
+                "name": "dan.password",
+                "version_created_at": "2016-09-06T23:26:58Z"
+              },
+              {
+                "name": "deploy1/dan/id.key",
+                "version_created_at": "2016-09-06T23:26:58Z"
+              }
+            ]
+          }`)),
+				}, nil)
 
-			It("retuns an empty versions array", func() {
 				checkResponse, err := checkCommand.Run(checkRequest)
+				Expect(httpClient.DoCallCount()).To(Equal(3))
 				Expect(err).ToNot(HaveOccurred())
-
-				Expect(director.DownloadManifestCallCount()).To(Equal(1))
-				Expect(checkResponse).To(Equal([]concourse.Version{}))
-			})
-		})
-
-		Context("When the there is an error downloading the manifest", func() {
-			BeforeEach(func() {
-				director.DownloadManifestReturns([]byte{}, errors.New("No manifest for you"))
+				Expect(checkResponse).To(Equal([]concourse.Version{
+					{
+						ManifestSha1: "182d2f06b2e6368bd2f22269362351616f5406ed",
+						Target:       "foo.example.com",
+					},
+				}))
 			})
 
-			It("returns the error", func() {
-				_, err := checkCommand.Run(checkRequest)
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("No manifest for you"))
+			It("returns different SHA1 when version_created_at changes", func() {
+				httpClient.DoReturnsOnCall(2, &http.Response{
+					StatusCode: 200,
+					Body: ioutil.NopCloser(bytes.NewBufferString(`{
+            "credentials": [
+              {
+                "name": "dan.password",
+                "version_created_at": "1990-09-06T23:26:58Z"
+              },
+              {
+                "name": "deploy1/dan/id.key",
+                "version_created_at": "2016-09-06T23:26:58Z"
+              }
+            ]
+          }`)),
+				}, nil)
+
+				checkResponse, err := checkCommand.Run(checkRequest)
+				Expect(httpClient.DoCallCount()).To(Equal(3))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(checkResponse).To(Equal([]concourse.Version{
+					{
+						ManifestSha1: "be1a1662163ce757245b0c8251acc26cabbb9583",
+						Target:       "foo.example.com",
+					},
+				}))
 			})
 		})
 	})

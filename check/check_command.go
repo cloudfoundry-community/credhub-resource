@@ -9,16 +9,21 @@ import (
 )
 
 type CheckCommand struct {
-	client credhub.CredhubClient
+	client *credhub.CredhubClient
 }
 
-func NewCheckCommand(client credhub.CredhubClient) CheckCommand {
+func NewCheckCommand(client *credhub.CredhubClient) CheckCommand {
 	return CheckCommand{client: client}
 }
 
 func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Version, error) {
+	err := c.client.Login(checkRequest.Source)
+	if err != nil {
+		return []concourse.Version{}, err
+	}
+
 	action := actions.NewAction(
-		repositories.NewAllPathRepository(c.client.HttpClient),
+		repositories.NewSecretQueryRepository(c.client.HttpClient),
 		c.client.Config,
 	)
 
@@ -28,7 +33,7 @@ func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Vers
 		return []concourse.Version{}, err
 	}
 
-	version := concourse.NewVersion([]byte(credentials.ToJson()), checkRequest.Source.Server)
+	version := concourse.NewVersion([]byte(credentials.ToYaml()), checkRequest.Source.Server)
 
 	var concourseOutput = []concourse.Version{}
 	if version != checkRequest.Version {

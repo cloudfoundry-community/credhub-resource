@@ -26,14 +26,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	httpClient := client.NewHttpClient(credhub.BaseConfig(checkRequest.Source))
-	client, err := credhub.NewCredhubClient(checkRequest.Source, httpClient)
-	if err != nil {
-		fmt.Fprint(os.Stderr, err)
-		os.Exit(1)
-	}
-
-	checkCommand := check.NewCheckCommand(client)
+	checkCommand := check.NewCheckCommand(
+		credhub.NewCredhubClient(
+			client.NewHttpClient(
+				credhub.BaseConfig(checkRequest.Source))))
 	checkResponse, err := checkCommand.Run(checkRequest)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
