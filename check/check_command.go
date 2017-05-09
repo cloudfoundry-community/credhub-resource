@@ -20,6 +20,9 @@ func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Vers
 	}
 
 	credentials, err := c.client.FindAllCredentialPaths("")
+	if err != nil {
+		return []concourse.Version{}, err
+	}
 
 	version := concourse.NewVersion([]byte(credentials), checkRequest.Source.Server)
 
