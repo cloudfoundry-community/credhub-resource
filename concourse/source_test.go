@@ -1,123 +1,38 @@
 package concourse_test
 
 import (
-	"fmt"
-	"io/ioutil"
-	"path/filepath"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/starkandwayne/bosh2-errand-resource/concourse"
+	"github.com/starkandwayne/credhub-resource/concourse"
 )
 
-var _ = Describe("NewDynamicSource", func() {
+var _ = Describe("NewSource", func() {
 	It("converts the config into a Source", func() {
 		config := []byte(`{
 			"source": {
-				"deployment": "mydeployment",
-				"target": "director.example.com",
-				"client": "foo",
-				"client_secret": "foobar"
+				"server": "foo.example.com",
+				"username": "foo-user",
+				"password": "foo-pass",
+				"skip_tls_validation": false
 			}
 		}`)
 
-		source, err := concourse.NewDynamicSource(config, "")
+		source, err := concourse.NewSource(config, "")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(source).To(Equal(concourse.Source{
-			Deployment:   "mydeployment",
-			Target:       "director.example.com",
-			Client:       "foo",
-			ClientSecret: "foobar",
+			Server:            "foo.example.com",
+			Username:          "foo-user",
+			Password:          "foo-pass",
+			SkipTLSValidation: false,
 		}))
-	})
-
-	Context("when source_file param is passed", func() {
-		var (
-			sourcesDir          string
-			sourceFileName      string
-			requestJsonTemplate string = `{
-				"params": {
-					"source_file": "%s"
-				},
-				"source": {
-					"deployment": "mydeployment",
-					"target": "director.example.com",
-					"client": "original_client",
-					"client_secret": "foobar",
-					"vars_store": {
-						"provider": "gcs",
-						"config": {
-							"some": "dynamic",
-							"keys": "per-provider"
-						}
-					}
-				}
-			}`
-		)
-
-		BeforeEach(func() {
-			sourceFile, _ := ioutil.TempFile("", "")
-			sourceFile.Write(properYaml(`
-				deployment: fileDeployment
-				target: fileDirector.com
-				client_secret: fileSecret
-				vars_store:
-					provider: fileProvider
-					config:
-						file: vars
-						keys: dynamic-keys
-			`))
-			sourceFile.Close()
-
-			sourcesDir = filepath.Dir(sourceFile.Name())
-			sourceFileName = filepath.Base(sourceFile.Name())
-		})
-
-		It("overrides source with the values in the source_file", func() {
-			config := []byte(fmt.Sprintf(
-				requestJsonTemplate,
-				filepath.Base(sourceFileName),
-			))
-
-			source, err := concourse.NewDynamicSource(config, sourcesDir)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(source).To(Equal(concourse.Source{
-				Deployment:   "fileDeployment",
-				Target:       "fileDirector.com",
-				Client:       "original_client",
-				ClientSecret: "fileSecret",
-				VarsStore: concourse.VarsStore{
-					Provider: "fileProvider",
-					Config: map[string]interface{}{
-						"file": "vars",
-						"some": "dynamic",
-						"keys": "dynamic-keys",
-					},
-				},
-			}))
-		})
-
-		Context("when the target_file cannot be read", func() {
-			BeforeEach(func() {
-				sourceFileName = "not-a-real-file"
-			})
-
-			It("errors", func() {
-				config := []byte(fmt.Sprintf(requestJsonTemplate, sourceFileName))
-
-				_, err := concourse.NewDynamicSource(config, sourcesDir)
-				Expect(err).To(HaveOccurred())
-			})
-		})
 	})
 
 	Context("when decoding fails", func() {
 		It("errors", func() {
 			reader := []byte("not-json")
 
-			_, err := concourse.NewDynamicSource(reader, "")
+			_, err := concourse.NewSource(reader, "")
 			Expect(err).To(HaveOccurred())
 		})
 	})
@@ -126,13 +41,12 @@ var _ = Describe("NewDynamicSource", func() {
 		It("returns an error with each missing parameter", func() {
 			config := []byte("{}")
 
-			_, err := concourse.NewDynamicSource(config, "")
+			_, err := concourse.NewSource(config, "")
 			Expect(err).To(HaveOccurred())
 
-			Expect(err.Error()).To(ContainSubstring("deployment"))
-			Expect(err.Error()).To(ContainSubstring("target"))
-			Expect(err.Error()).To(ContainSubstring("client"))
-			Expect(err.Error()).To(ContainSubstring("client_secret"))
+			Expect(err.Error()).To(ContainSubstring("server"))
+			Expect(err.Error()).To(ContainSubstring("username"))
+			Expect(err.Error()).To(ContainSubstring("password"))
 		})
 	})
 })
