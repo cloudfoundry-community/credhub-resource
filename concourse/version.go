@@ -6,13 +6,13 @@ import (
 )
 
 type Version struct {
-	ManifestSha1 string `json:"manifest_sha1"`
-	Target       string `json:"target"`
+	CredentialsSha1 string `json:"credentials_sha1"`
+	Server          string `json:"server"`
 }
 
-func NewVersion(bytesToSha1 []byte, target string) Version {
+func NewVersion(bytesToSha1 []byte, server string) Version {
 	return Version{
-		ManifestSha1: fmt.Sprintf("%x", sha1.Sum(bytesToSha1)),
-		Target:       target,
+		CredentialsSha1: fmt.Sprintf("%x", sha1.Sum(bytesToSha1)),
+		Server:          server,
 	}
 }

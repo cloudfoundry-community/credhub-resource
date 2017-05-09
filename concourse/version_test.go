@@ -1,7 +1,7 @@
 package concourse_test
 
 import (
-	"github.com/starkandwayne/bosh2-errand-resource/concourse"
+	"github.com/starkandwayne/credhub-resource/concourse"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,9 +12,9 @@ var _ = Describe("Version", func() {
 	sillyBytesSha1 := "33bf00cb7a45258748f833a47230124fcc8fa3a4"
 
 	It("presents the SHA1 as a string", func() {
-		Expect(concourse.NewVersion(sillyBytes, "director.example.com")).To(Equal(concourse.Version{
-			ManifestSha1: sillyBytesSha1,
-			Target:       "director.example.com",
+		Expect(concourse.NewVersion(sillyBytes, "foo.example.com")).To(Equal(concourse.Version{
+			CredentialsSha1: sillyBytesSha1,
+			Server:          "foo.example.com",
 		}))
 	})
 })
