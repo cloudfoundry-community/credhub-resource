@@ -1,0 +1,163 @@
+---
+resources:
+- name: credhub-resource
+  type: git
+  source:
+    branch: master
+    uri: git@github.com:cloudfoundry-community/credhub-resource
+    ignore_paths: [ci/*]
+    private_key: {{credhub-resource-git-deploy-private-key}}
+
+- name: credhub-resource-image
+  type: docker-image
+  source:
+    username: {{dockerhub_username}}
+    password: {{dockerhub_password}}
+    repository:  &credhub-resource-image-repo cloudfoundry-community/credhub-resource
+
+- name: version
+  type: semver
+  source:
+    driver: git
+    uri: git@github.com:cloudfoundry-community/credhub-resource
+    branch: version
+    file: version
+    private_key: {{credhub-resource-git-deploy-private-key}}
+
+- name: credhub-resource-github-release
+  type: github-release
+  source:
+    access_token: {{credhub-resource-github-release-access-token}}
+    repository: credhub-resource
+    user: starkandwayne
+
+- name: credhub-resource-ci
+  type: git
+  source:
+    branch: master
+    uri: https://github.com/cloudfoundry-community/credhub-resource
+    paths: [ci/*]
+
+jobs:
+- name: test
+  plan:
+  - do:
+    - aggregate:
+      - get: credhub-resource-ci
+      - get: credhub-resource
+        trigger: true
+    - task: unit-test
+      file: credhub-resource-ci/ci/tasks/unit-test.yml
+
+- name: rc
+  serial_groups: [version]
+  plan:
+  - do:
+    - aggregate:
+      - get: credhub-resource-ci
+      - get: credhub-resource
+        passed: [test]
+        trigger: true
+      - get: version
+        params: {pre: rc}
+    - aggregate:
+      - task: build
+        file: credhub-resource-ci/ci/tasks/build.yml
+      - task: write-release-candidate-tag
+        file: credhub-resource-ci/ci/tasks/write-tag-file.yml
+        params:
+          TAG: &rc-tag release-candidate
+    - aggregate:
+      - put: credhub-resource-image
+        params:
+          build: built-binaries
+          tag: version/version
+          tag_prefix: v
+      - put: credhub-resource-image
+        params:
+          build: built-binaries
+          tag: tag-file/tag
+    - put: version
+      params: {file: version/version}
+
+- name: shipit
+  serial_groups: [version]
+  plan:
+  - do:
+    - aggregate:
+      - get: credhub-resource-ci
+      - get: credhub-resource
+        passed: [rc]
+      - get: version
+        passed: [rc]
+        params: {bump: final}
+      - get: credhub-resource-image
+        passed: [rc]
+    - task: write-latest-final-tag
+      file: credhub-resource-ci/ci/tasks/write-tag-file.yml
+      params:
+        TAG: latest
+    - aggregate:
+      - put: credhub-resource-image
+        params:
+          pull_repository: *credhub-resource-image-repo
+          pull_tag: *rc-tag
+          tag: version/version
+          tag_prefix: v
+      - put: credhub-resource-image
+        params:
+          pull_repository: *credhub-resource-image-repo
+          pull_tag: *rc-tag
+          tag: tag-file/tag
+      - put: credhub-resource
+        params:
+          repository: credhub-resource
+          tag: version/version
+          tag_prefix: v
+          only_tag: true
+    - aggregate:
+      - put: credhub-resource-github-release
+        params:
+          name: version/version
+          tag: version/version
+          tag_prefix: v
+      - put: version
+        params: {file: version/version}
+
+- name: auto-patch
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    passed: [shipit]
+    params: {bump: patch, pre: rc}
+    trigger: true
+  - put: version
+    params: {file: version/version}
+
+- name: major
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    params: {bump: major, pre: rc}
+  - put: version
+    params: {file: version/version}
+
+- name: minor
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    params: {bump: minor, pre: rc}
+  - put: version
+    params: {file: version/version}
+
+- name: patch
+  public: true
+  serial_groups: [version]
+  plan:
+  - get: version
+    params: {bump: patch, pre: rc}
+  - put: version
+    params: {file: version/version}
