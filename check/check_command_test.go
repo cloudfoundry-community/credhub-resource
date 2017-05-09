@@ -60,34 +60,6 @@ var _ = Describe("CheckCommand", func() {
 				}, nil)
 			})
 
-			It("different order should lead to same SHA1", func() {
-				httpClient.DoReturnsOnCall(2, &http.Response{
-					StatusCode: 200,
-					Body: ioutil.NopCloser(bytes.NewBufferString(`{
-            "credentials": [
-              {
-                "version_created_at": "2016-09-06T23:26:58Z",
-                "name": "deploy1/dan/id.key"
-              },
-              {
-                "version_created_at": "2016-09-06T23:26:58Z",
-                "name": "dan.password"
-              }
-            ]
-          }`)),
-				}, nil)
-
-				checkResponse, err := checkCommand.Run(checkRequest)
-				Expect(httpClient.DoCallCount()).To(Equal(3))
-				Expect(err).ToNot(HaveOccurred())
-				Expect(checkResponse).To(Equal([]concourse.Version{
-					{
-						ManifestSha1: "182d2f06b2e6368bd2f22269362351616f5406ed",
-						Target:       "foo.example.com",
-					},
-				}))
-			})
-
 			It("returns the SHA1 of the credhub keys", func() {
 				httpClient.DoReturnsOnCall(2, &http.Response{
 					StatusCode: 200,
@@ -110,7 +82,35 @@ var _ = Describe("CheckCommand", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
-						ManifestSha1: "182d2f06b2e6368bd2f22269362351616f5406ed",
+						ManifestSha1: "c60309d18c0a68d2ac792e5a8717ad1f4d0bb25a",
+						Target:       "foo.example.com",
+					},
+				}))
+			})
+
+			It("different order should lead to same SHA1", func() {
+				httpClient.DoReturnsOnCall(2, &http.Response{
+					StatusCode: 200,
+					Body: ioutil.NopCloser(bytes.NewBufferString(`{
+            "credentials": [
+              {
+                "version_created_at": "2016-09-06T23:26:58Z",
+                "name": "deploy1/dan/id.key"
+              },
+              {
+                "version_created_at": "2016-09-06T23:26:58Z",
+                "name": "dan.password"
+              }
+            ]
+          }`)),
+				}, nil)
+
+				checkResponse, err := checkCommand.Run(checkRequest)
+				Expect(httpClient.DoCallCount()).To(Equal(3))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(checkResponse).To(Equal([]concourse.Version{
+					{
+						ManifestSha1: "c60309d18c0a68d2ac792e5a8717ad1f4d0bb25a",
 						Target:       "foo.example.com",
 					},
 				}))
@@ -138,7 +138,7 @@ var _ = Describe("CheckCommand", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
-						ManifestSha1: "be1a1662163ce757245b0c8251acc26cabbb9583",
+						ManifestSha1: "3679b407fda8b7ab23a2fdc9aab4f5865066113c",
 						Target:       "foo.example.com",
 					},
 				}))

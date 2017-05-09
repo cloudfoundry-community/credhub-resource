@@ -1,9 +1,6 @@
 package check
 
 import (
-	"github.com/cloudfoundry-incubator/credhub-cli/actions"
-	"github.com/cloudfoundry-incubator/credhub-cli/client"
-	"github.com/cloudfoundry-incubator/credhub-cli/repositories"
 	"github.com/starkandwayne/credhub-resource/concourse"
 	"github.com/starkandwayne/credhub-resource/credhub"
 )
@@ -22,18 +19,9 @@ func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Vers
 		return []concourse.Version{}, err
 	}
 
-	action := actions.NewAction(
-		repositories.NewSecretQueryRepository(c.client.HttpClient),
-		c.client.Config,
-	)
+	credentials, err := c.client.FindAllCredentialPaths("")
 
-	credentials, err := action.DoAction(
-		client.NewFindAllCredentialPathsRequest(c.client.Config), "")
-	if err != nil {
-		return []concourse.Version{}, err
-	}
-
-	version := concourse.NewVersion([]byte(credentials.ToYaml()), checkRequest.Source.Server)
+	version := concourse.NewVersion([]byte(credentials), checkRequest.Source.Server)
 
 	var concourseOutput = []concourse.Version{}
 	if version != checkRequest.Version {
