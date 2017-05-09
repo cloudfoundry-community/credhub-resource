@@ -1,10 +1,10 @@
 package credhub
 
 import (
+	"github.com/cloudfoundry-community/credhub-resource/concourse"
 	"github.com/cloudfoundry-incubator/credhub-cli/actions"
 	"github.com/cloudfoundry-incubator/credhub-cli/client"
 	"github.com/cloudfoundry-incubator/credhub-cli/config"
-	"github.com/starkandwayne/credhub-resource/concourse"
 )
 
 type CredhubClient struct {

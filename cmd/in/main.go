@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/cloudfoundry-community/credhub-resource/concourse"
+	"github.com/cloudfoundry-community/credhub-resource/credhub"
+	"github.com/cloudfoundry-community/credhub-resource/in"
 	"github.com/cloudfoundry-incubator/credhub-cli/client"
-	"github.com/starkandwayne/credhub-resource/concourse"
-	"github.com/starkandwayne/credhub-resource/credhub"
-	"github.com/starkandwayne/credhub-resource/in"
 )
 
 func main() {

@@ -1,9 +1,9 @@
 package concourse_test
 
 import (
+	"github.com/cloudfoundry-community/credhub-resource/concourse"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/starkandwayne/credhub-resource/concourse"
 )
 
 var _ = Describe("NewSource", func() {
