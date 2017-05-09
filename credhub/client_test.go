@@ -14,7 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Client", func() {
+var _ = Describe("CredhubClient", func() {
 	var (
 		client     *CredhubClient
 		httpClient *clientfakes.FakeHttpClient

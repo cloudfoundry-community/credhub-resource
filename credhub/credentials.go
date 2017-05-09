@@ -19,7 +19,7 @@ func (c CredhubClient) FindAllCredentialPaths(path string) ([]byte, error) {
 	)
 
 	credentials, err := action.DoAction(
-		client.NewFindAllCredentialPathsRequest(c.Config), path)
+		client.NewFindCredentialsByPathRequest(c.Config, path), path)
 	if err != nil {
 		return []byte{}, err
 	}
