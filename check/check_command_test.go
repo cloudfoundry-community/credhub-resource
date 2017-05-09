@@ -17,7 +17,7 @@ import (
 var _ = Describe("CheckCommand", func() {
 	var (
 		checkCommand check.CheckCommand
-		client       credhub.CredhubClient
+		client       *credhub.CredhubClient
 		httpClient   *clientfakes.FakeHttpClient
 	)
 
@@ -58,9 +58,7 @@ var _ = Describe("CheckCommand", func() {
             "expires_in":3600
           }`)),
 				}, nil)
-			})
 
-			It("returns the SHA1 of the credhub keys", func() {
 				httpClient.DoReturnsOnCall(2, &http.Response{
 					StatusCode: 200,
 					Body: ioutil.NopCloser(bytes.NewBufferString(`{
@@ -76,7 +74,16 @@ var _ = Describe("CheckCommand", func() {
             ]
           }`)),
 				}, nil)
+			})
 
+			It("stores its client session", func() {
+				_, err := checkCommand.Run(checkRequest)
+				Expect(httpClient.DoCallCount()).To(Equal(3))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(client.Config.AccessToken).ToNot(Equal(""))
+			})
+
+			It("returns the SHA1 of the credhub keys", func() {
 				checkResponse, err := checkCommand.Run(checkRequest)
 				Expect(httpClient.DoCallCount()).To(Equal(3))
 				Expect(err).ToNot(HaveOccurred())

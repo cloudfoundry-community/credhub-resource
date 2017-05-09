@@ -11,11 +11,11 @@ type OutResponse struct {
 }
 
 type OutCommand struct {
-	client             credhub.CredhubClient
+	client             *credhub.CredhubClient
 	resourcesDirectory string
 }
 
-func NewOutCommand(client credhub.CredhubClient, resourcesDirectory string) OutCommand {
+func NewOutCommand(client *credhub.CredhubClient, resourcesDirectory string) OutCommand {
 	return OutCommand{
 		client:             client,
 		resourcesDirectory: resourcesDirectory,

@@ -8,14 +8,14 @@ import (
 )
 
 type InCommand struct {
-	client credhub.CredhubClient
+	client *credhub.CredhubClient
 }
 
 type InResponse struct {
 	Version concourse.Version `json:"version"`
 }
 
-func NewInCommand(client credhub.CredhubClient) InCommand {
+func NewInCommand(client *credhub.CredhubClient) InCommand {
 	return InCommand{client: client}
 }
 

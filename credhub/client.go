@@ -16,14 +16,13 @@ func BaseConfig(source concourse.Source) config.Config {
 	return config.Config{ApiURL: source.Server, InsecureSkipVerify: source.SkipTLSValidation}
 }
 
-func NewCredhubClient(httpClient client.HttpClient) CredhubClient {
-	return CredhubClient{HttpClient: httpClient}
+func NewCredhubClient(httpClient client.HttpClient) *CredhubClient {
+	return &CredhubClient{HttpClient: httpClient}
 }
 
 func (c *CredhubClient) Login(source concourse.Source) error {
 	c.Config = BaseConfig(source)
 	serverInfo := actions.NewInfo(c.HttpClient, c.Config)
-
 	info, err := serverInfo.GetServerInfo()
 	if err != nil {
 		return err

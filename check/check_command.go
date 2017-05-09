@@ -6,10 +6,10 @@ import (
 )
 
 type CheckCommand struct {
-	client credhub.CredhubClient
+	client *credhub.CredhubClient
 }
 
-func NewCheckCommand(client credhub.CredhubClient) CheckCommand {
+func NewCheckCommand(client *credhub.CredhubClient) CheckCommand {
 	return CheckCommand{client: client}
 }
 
