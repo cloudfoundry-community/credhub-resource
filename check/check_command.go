@@ -24,7 +24,7 @@ func (c CheckCommand) Run(checkRequest concourse.CheckRequest) ([]concourse.Vers
 		return []concourse.Version{}, err
 	}
 
-	version := concourse.NewVersion([]byte(credentials), checkRequest.Source.Server)
+	version := concourse.NewVersion(credentials, checkRequest.Source.Server)
 
 	var concourseOutput = []concourse.Version{}
 	if version != checkRequest.Version {
