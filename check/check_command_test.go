@@ -24,7 +24,7 @@ var _ = Describe("CheckCommand", func() {
 	BeforeEach(func() {
 		httpClient = new(clientfakes.FakeHttpClient)
 		client = credhub.NewCredhubClient(httpClient)
-		checkCommand = check.NewCheckCommand(&client)
+		checkCommand = check.NewCheckCommand(client)
 	})
 
 	Describe("Run", func() {
@@ -82,8 +82,8 @@ var _ = Describe("CheckCommand", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
-						ManifestSha1: "c60309d18c0a68d2ac792e5a8717ad1f4d0bb25a",
-						Target:       "foo.example.com",
+						CredentialsSha1: "c60309d18c0a68d2ac792e5a8717ad1f4d0bb25a",
+						Server:          "foo.example.com",
 					},
 				}))
 			})
@@ -110,8 +110,8 @@ var _ = Describe("CheckCommand", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
-						ManifestSha1: "c60309d18c0a68d2ac792e5a8717ad1f4d0bb25a",
-						Target:       "foo.example.com",
+						CredentialsSha1: "c60309d18c0a68d2ac792e5a8717ad1f4d0bb25a",
+						Server:          "foo.example.com",
 					},
 				}))
 			})
@@ -138,8 +138,8 @@ var _ = Describe("CheckCommand", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(checkResponse).To(Equal([]concourse.Version{
 					{
-						ManifestSha1: "3679b407fda8b7ab23a2fdc9aab4f5865066113c",
-						Target:       "foo.example.com",
+						CredentialsSha1: "3679b407fda8b7ab23a2fdc9aab4f5865066113c",
+						Server:          "foo.example.com",
 					},
 				}))
 			})
