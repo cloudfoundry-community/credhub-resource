@@ -29,6 +29,7 @@ func (c *CredhubClient) Login(source concourse.Source) error {
 	}
 	c.Config.AuthURL = info.AuthServer.Url
 
+	serverInfo = actions.NewInfo(c.HttpClient, c.Config)
 	token, err := serverInfo.GetAuthToken(source.Username, source.Password)
 	if err != nil {
 		return err

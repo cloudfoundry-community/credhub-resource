@@ -30,7 +30,7 @@ var _ = Describe("Client", func() {
 				StatusCode: 200,
 				Body: ioutil.NopCloser(bytes.NewBufferString(`{
             "app":{"version":"my-version","name":"CredHub"},
-            "auth-server":{"url":"https://example.com"}
+            "auth-server":{"url":"https://uaa.example.com"}
           }`)),
 			}, nil)
 
@@ -48,15 +48,25 @@ var _ = Describe("Client", func() {
 		Context("With valid concourse.Source", func() {
 			It("fetches a auth token", func() {
 				err := client.Login(concourse.Source{
-					Server:            "foo.example.com",
+					Server:            "https://credhub.example.com",
 					Username:          "foo-user",
 					Password:          "foo-pass",
 					SkipTLSValidation: true,
 				})
+
 				Expect(err).ToNot(HaveOccurred())
+
+				Expect(httpClient.DoArgsForCall(0).URL.Scheme).To(Equal("https"))
+				Expect(httpClient.DoArgsForCall(0).URL.Host).To(Equal("credhub.example.com"))
+				Expect(httpClient.DoArgsForCall(0).URL.Path).To(Equal("/info"))
+
+				Expect(httpClient.DoArgsForCall(1).URL.Scheme).To(Equal("https"))
+				Expect(httpClient.DoArgsForCall(1).URL.Host).To(Equal("uaa.example.com"))
+				Expect(httpClient.DoArgsForCall(1).URL.Path).To(Equal("/oauth/token/"))
+
 				Expect(client.Config).To(Equal(config.Config{
-					ApiURL:             "foo.example.com",
-					AuthURL:            "https://example.com",
+					ApiURL:             "https://credhub.example.com",
+					AuthURL:            "https://uaa.example.com",
 					AccessToken:        "2YotnFZFEjr1zCsicMWpAA",
 					RefreshToken:       "5235FZFEjr1zCsicMWpAA",
 					InsecureSkipVerify: true,
