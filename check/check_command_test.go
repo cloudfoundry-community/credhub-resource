@@ -8,8 +8,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/cloudfoundry-incubator/credhub-cli/client/clientfakes"
 	"github.com/starkandwayne/credhub-resource/check"
+	"github.com/starkandwayne/credhub-resource/clientfakes"
 	"github.com/starkandwayne/credhub-resource/concourse"
 	"github.com/starkandwayne/credhub-resource/credhub"
 )
