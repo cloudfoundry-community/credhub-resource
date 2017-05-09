@@ -12,7 +12,7 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-func (c CredhubClient) FindAllCredentialPaths(path string) (string, error) {
+func (c CredhubClient) FindAllCredentialPaths(path string) ([]byte, error) {
 	action := actions.NewAction(
 		repositories.NewCredentialQueryRepository(c.HttpClient),
 		c.Config,
@@ -21,15 +21,15 @@ func (c CredhubClient) FindAllCredentialPaths(path string) (string, error) {
 	credentials, err := action.DoAction(
 		client.NewFindAllCredentialPathsRequest(c.Config), path)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
 
 	canonicallizedJSON, err := canonicallizeCredentialsJSON(credentials.ToJson())
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
 
-	return canonicallizedJSON, nil
+	return []byte(canonicallizedJSON), nil
 }
 
 func canonicallizeCredentialsJSON(json string) (string, error) {
