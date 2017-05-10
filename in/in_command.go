@@ -25,7 +25,7 @@ func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InRespo
 		return InResponse{}, err
 	}
 
-	credentials, err := c.client.FindAllCredentialPaths("")
+	credentials, err := c.client.FindAllCredentialPaths(inRequest.Source.Path)
 	if err != nil {
 		return InResponse{}, err
 	}

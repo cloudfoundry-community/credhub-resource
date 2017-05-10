@@ -37,6 +37,7 @@ var _ = Describe("CheckCommand", func() {
 						Server:   "foo.example.com",
 						Username: "foo-user",
 						Password: "foo-pass",
+						Path:     "/foo-path",
 					},
 					Version: concourse.Version{},
 				}
@@ -81,6 +82,13 @@ var _ = Describe("CheckCommand", func() {
 				Expect(httpClient.DoCallCount()).To(Equal(3))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(client.Config.AccessToken).ToNot(Equal(""))
+			})
+
+			It("stores passes the Path", func() {
+				_, err := checkCommand.Run(checkRequest)
+				Expect(httpClient.DoCallCount()).To(Equal(3))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(httpClient.DoArgsForCall(2).URL.RawQuery).To(Equal("path=%2Ffoo-path"))
 			})
 
 			It("returns the SHA1 of the credhub keys", func() {

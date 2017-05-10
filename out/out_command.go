@@ -23,7 +23,7 @@ func NewOutCommand(client *credhub.CredhubClient, resourcesDirectory string) Out
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
-	credentials, err := c.client.FindAllCredentialPaths("")
+	credentials, err := c.client.FindAllCredentialPaths(outRequest.Source.Path)
 	if err != nil {
 		return OutResponse{}, err
 	}

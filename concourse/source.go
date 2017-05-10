@@ -12,6 +12,7 @@ type Source struct {
 	Server            string `json:"server,omitempty" yaml:"server"`
 	Username          string `json:"username,omitempty" yaml:"username"`
 	Password          string `json:"password,omitempty" yaml:"password"`
+	Path              string `json:"path,omitempty" yaml:"path"`
 	SkipTLSValidation bool   `json:"skip_tls_validation,omitempty" yaml:"skip_tls_validation"`
 }
 
