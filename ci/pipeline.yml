@@ -29,7 +29,7 @@ resources:
   source:
     access_token: {{credhub-resource-github-release-access-token}}
     repository: credhub-resource
-    user: starkandwayne
+    user: cloudfoundry-community
 
 - name: credhub-resource-ci
   type: git
