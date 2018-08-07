@@ -6,16 +6,14 @@ import (
 	"net/url"
 	"time"
 
+	"log"
+
+	"crypto/x509"
+
 	"github.com/cloudfoundry-incubator/credhub-cli/config"
 )
 
 const TIMEOUT_SECS = 45
-
-//go:generate counterfeiter . HttpClient
-
-type HttpClient interface {
-	Do(req *http.Request) (resp *http.Response, err error)
-}
 
 func NewHttpClient(cfg config.Config) *http.Client {
 	parsedUrl, _ := url.Parse(cfg.ApiURL)
@@ -35,8 +33,23 @@ func newHttpsClient(cfg config.Config) *http.Client {
 		InsecureSkipVerify:       cfg.InsecureSkipVerify,
 		PreferServerCipherSuites: true,
 	}
+
+	if !cfg.InsecureSkipVerify {
+		for _, cert := range cfg.CaCerts {
+			if tlsConfig.RootCAs == nil {
+				tlsConfig.RootCAs = x509.NewCertPool()
+			}
+			ok := tlsConfig.RootCAs.AppendCertsFromPEM([]byte(cert))
+
+			if !ok {
+				log.Fatal("failed to parse root certificate")
+			}
+		}
+	}
+
 	tr := &http.Transport{
 		TLSClientConfig: tlsConfig,
+		Proxy: http.ProxyFromEnvironment,
 	}
 
 	client := &http.Client{

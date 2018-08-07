@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/cloudfoundry-incubator/credhub-cli/util"
 )
 
 const AuthClient = "credhub_cli"
@@ -16,6 +18,8 @@ type Config struct {
 	AccessToken        string
 	RefreshToken       string
 	InsecureSkipVerify bool
+	CaCerts            []string
+	ServerVersion      string
 }
 
 func ConfigDir() string {
@@ -56,4 +60,20 @@ func WriteConfig(c Config) error {
 
 func RemoveConfig() error {
 	return os.Remove(ConfigPath())
+}
+
+func (cfg *Config) UpdateTrustedCAs(caCerts []string) error {
+	certs := []string{}
+
+	for _, cert := range caCerts {
+		certContents, err := util.ReadFileOrStringFromField(cert)
+		if err != nil {
+			return err
+		}
+		certs = append(certs, certContents)
+	}
+
+	cfg.CaCerts = certs
+
+	return nil
 }
