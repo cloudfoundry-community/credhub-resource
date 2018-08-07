@@ -3,14 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
-	"io/ioutil"
+	"code.cloudfoundry.org/credhub-cli/credhub"
+	"code.cloudfoundry.org/credhub-cli/credhub/auth"
 
 	"github.com/cloudfoundry-community/credhub-resource/check"
 	"github.com/cloudfoundry-community/credhub-resource/concourse"
-	"github.com/cloudfoundry-community/credhub-resource/credhub"
-	"github.com/cloudfoundry-incubator/credhub-cli/client"
 )
 
 func main() {
@@ -26,9 +26,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	checkCommand := check.NewCheckCommand(credhub.NewCredhubClient(
-		client.NewHttpClient(
-			credhub.BaseConfig(checkRequest.Source))))
+	client, err := credhub.New(
+		checkRequest.Source.Server,
+		credhub.SkipTLSValidation(checkRequest.Source.SkipTLSValidation),
+		credhub.Auth(auth.UaaClientCredentials(
+			checkRequest.Source.Username,
+			checkRequest.Source.Password,
+		)),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating CredHub client: %s\n", err)
+		os.Exit(1)
+	}
+
+	checkCommand := check.NewCheckCommand(client)
 	checkResponse, err := checkCommand.Run(checkRequest)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)

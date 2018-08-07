@@ -1,36 +1,40 @@
 package in
 
 import (
+	"encoding/json"
 	"errors"
+	"sort"
 
 	"github.com/cloudfoundry-community/credhub-resource/concourse"
 	"github.com/cloudfoundry-community/credhub-resource/credhub"
 )
 
 type InCommand struct {
-	client *credhub.CredhubClient
+	client credhub.CredHub
 }
 
 type InResponse struct {
 	Version concourse.Version `json:"version"`
 }
 
-func NewInCommand(client *credhub.CredhubClient) InCommand {
+func NewInCommand(client credhub.CredHub) InCommand {
 	return InCommand{client: client}
 }
 
 func (c InCommand) Run(inRequest concourse.InRequest, targetDir string) (InResponse, error) {
-	err := c.client.Login(inRequest.Source)
+	credentials, err := c.client.FindByPath(inRequest.Source.Path)
+	if err != nil {
+		return InResponse{}, err
+	}
+	sort.Slice(credentials.Credentials, func(i, j int) bool {
+		return credentials.Credentials[i].Name < credentials.Credentials[j].Name
+	})
+	raw, err := json.Marshal(credentials)
 	if err != nil {
 		return InResponse{}, err
 	}
 
-	credentials, err := c.client.FindAllCredentialPaths(inRequest.Source.Path)
-	if err != nil {
-		return InResponse{}, err
-	}
-
-	actualVersion := concourse.NewVersion(credentials, inRequest.Source.Server)
+	actualVersion := concourse.NewVersion(raw, inRequest.Source.Server)
 
 	if actualVersion.Server != inRequest.Version.Server {
 		return InResponse{}, errors.New("Credhub server is different than configured source")

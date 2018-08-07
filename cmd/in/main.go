@@ -6,10 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 
+	"code.cloudfoundry.org/credhub-cli/credhub"
+	"code.cloudfoundry.org/credhub-cli/credhub/auth"
+
 	"github.com/cloudfoundry-community/credhub-resource/concourse"
-	"github.com/cloudfoundry-community/credhub-resource/credhub"
 	"github.com/cloudfoundry-community/credhub-resource/in"
-	"github.com/cloudfoundry-incubator/credhub-cli/client"
 )
 
 func main() {
@@ -41,9 +42,20 @@ func main() {
 		os.Exit(0)
 	}
 
-	inCommand := in.NewInCommand(credhub.NewCredhubClient(
-		client.NewHttpClient(
-			credhub.BaseConfig(inRequest.Source))))
+	client, err := credhub.New(
+		inRequest.Source.Server,
+		credhub.SkipTLSValidation(inRequest.Source.SkipTLSValidation),
+		credhub.Auth(auth.UaaClientCredentials(
+			inRequest.Source.Username,
+			inRequest.Source.Password,
+		)),
+	)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating CredHub client: %s\n", err)
+		os.Exit(1)
+	}
+
+	inCommand := in.NewInCommand(client)
 	inResponse, err := inCommand.Run(inRequest, targetDir)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)

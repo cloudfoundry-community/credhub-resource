@@ -1,6 +1,9 @@
 package out
 
 import (
+	"encoding/json"
+	"sort"
+
 	"github.com/cloudfoundry-community/credhub-resource/concourse"
 	"github.com/cloudfoundry-community/credhub-resource/credhub"
 )
@@ -11,11 +14,11 @@ type OutResponse struct {
 }
 
 type OutCommand struct {
-	client             *credhub.CredhubClient
+	client             credhub.CredHub
 	resourcesDirectory string
 }
 
-func NewOutCommand(client *credhub.CredhubClient, resourcesDirectory string) OutCommand {
+func NewOutCommand(client credhub.CredHub, resourcesDirectory string) OutCommand {
 	return OutCommand{
 		client:             client,
 		resourcesDirectory: resourcesDirectory,
@@ -23,12 +26,19 @@ func NewOutCommand(client *credhub.CredhubClient, resourcesDirectory string) Out
 }
 
 func (c OutCommand) Run(outRequest concourse.OutRequest) (OutResponse, error) {
-	credentials, err := c.client.FindAllCredentialPaths(outRequest.Source.Path)
+	credentials, err := c.client.FindByPath(outRequest.Source.Path)
+	if err != nil {
+		return OutResponse{}, err
+	}
+	sort.Slice(credentials.Credentials, func(i, j int) bool {
+		return credentials.Credentials[i].Name < credentials.Credentials[j].Name
+	})
+	raw, err := json.Marshal(credentials)
 	if err != nil {
 		return OutResponse{}, err
 	}
 
-	version := concourse.NewVersion([]byte(credentials), outRequest.Source.Server)
+	version := concourse.NewVersion(raw, outRequest.Source.Server)
 
 	concourseOutput := OutResponse{
 		Version:  version,
