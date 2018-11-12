@@ -6,7 +6,7 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry-community/credhub-resource
     ignore_paths: [ci/*]
-    private_key: ((credhub-resource-git-deploy-private-key))
+    private_key: ((github-private-key))
 
 - name: credhub-resource-image
   type: docker-image
