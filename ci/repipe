@@ -1,9 +1,2 @@
 #!/bin/bash
-
-export VAULT_ADDR=https://10.58.111.42:8200
-export VAULT_SKIP_VERIFY=1
-
-fly -t vsphere set-pipeline \
-    -p credhub-resource \
-    -c ./pipeline.yml \
-    -l <(spruce merge creds.yml)
+fly -t ci2 set-pipeline -p credhub-resource -c ./ci/pipeline.yml

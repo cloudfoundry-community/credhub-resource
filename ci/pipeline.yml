@@ -6,13 +6,13 @@ resources:
     branch: master
     uri: git@github.com:cloudfoundry-community/credhub-resource
     ignore_paths: [ci/*]
-    private_key: {{credhub-resource-git-deploy-private-key}}
+    private_key: ((credhub-resource-git-deploy-private-key))
 
 - name: credhub-resource-image
   type: docker-image
   source:
-    username: {{dockerhub_username}}
-    password: {{dockerhub_password}}
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
     repository:  &credhub-resource-image-repo cfcommunity/credhub-resource
 
 - name: version
@@ -22,12 +22,12 @@ resources:
     uri: git@github.com:cloudfoundry-community/credhub-resource
     branch: version
     file: version
-    private_key: {{credhub-resource-git-deploy-private-key}}
+    private_key: ((github-private-key))
 
 - name: credhub-resource-github-release
   type: github-release
   source:
-    access_token: {{credhub-resource-github-release-access-token}}
+    access_token: ((github-access-token))
     repository: credhub-resource
     user: cloudfoundry-community
 

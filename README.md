@@ -1,4 +1,4 @@
-# Credhub Resource [![Concourse Resource](https://ci.starkandwayne.com/api/v1/pipelines/credhub-resource/jobs/test/badge)](https://ci.starkandwayne.com/teams/main/pipelines/credhub-resource)
+# Credhub Resource [![Concourse Resource](https://ci2.starkandwayne.com/api/v1/teams/starkandwayne/pipelines/credhub-resource/jobs/test/badge)](https://ci2.starkandwayne.com/teams/starkandwayne/pipelines/credhub-resource)
 
 A [concourse](https://concourse.ci) resource for [Credhub](https://github.com/cloudfoundry-incubator/credhub).
 

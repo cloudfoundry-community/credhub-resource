@@ -1,4 +1,0 @@
-dockerhub_username: (( vault "secret/dockerhub:username" ))
-dockerhub_password: (( vault "secret/dockerhub:password" ))
-credhub-resource-git-deploy-private-key: (( vault "secret/pipelines/credhub-resource/github:private" ))
-credhub-resource-github-release-access-token: (( vault "secret/pipelines/credhub-resource/github:token" ))
